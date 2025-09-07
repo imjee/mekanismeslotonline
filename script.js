@@ -3,14 +3,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // KONFIGURASI GAME & SUARA
     // ==================================
     const CONFIG = {
-        GRID_SIZE: 6 * 5, MIN_WIN_COUNT: 8, SCATTER_TRIGGER_COUNT: 4,
-        FREE_SPINS_AWARDED: 15, BUY_FS_COST_MULTIPLIER: 100,
+        GRID_ROWS: 5,
+        GRID_COLS: 6,
+        MIN_WIN_COUNT: 8,
+        SCATTER_TRIGGER_COUNT: 4,
+        FREE_SPINS_AWARDED: 15,
+        BUY_FS_COST_MULTIPLIER: 100,
         BET_LEVELS: [100, 200, 500, 1000, 2500, 5000],
-        ANIMATION_DELAY: { WIN_DISPLAY: 800, DISAPPEAR: 300, FALL: 500 }
+        ANIMATION_DELAY: {
+            WIN_DISPLAY: 800,
+            SHATTER: 400, // Durasi animasi pecah
+            FALL: 300      // Durasi animasi jatuh per simbol
+        }
     };
 
     /*
-    // SUARA DINONAKTIFKAN UNTUK MENGHINDARI ERROR 'STUCK'
+    // SUARA DINONAKTIFKAN
     const SOUNDS = {
         spin: new Audio('spin.mp3'), win: new Audio('win.mp3'),
         tumble: new Audio('tumble.mp3'), freespin_intro: new Audio('freespin_intro.mp3'),
@@ -29,9 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================================
     // ELEMEN DOM
     // ==================================
+    const grid = document.getElementById('slot-grid');
+    // ... (sisa elemen DOM sama)
     const gameContainer = document.querySelector('.game-container');
     const monkeyMascot = document.getElementById('monkey-mascot');
-    const grid = document.getElementById('slot-grid');
     const balanceDisplay = document.getElementById('balance');
     const betAmountInput = document.getElementById('bet-amount');
     const spinButton = document.getElementById('spin-button');
@@ -43,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const freeSpinsCount = document.getElementById('free-spins-count');
     const totalWinSplash = document.getElementById('total-win-splash');
     const totalWinAmount = document.getElementById('total-win-amount');
-
+    
     // ==================================
     // STATUS GAME
     // ==================================
@@ -56,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================================
     // FUNGSI UTAMA
     // ==================================
-
     async function handleSpin() {
         if (state.isSpinning) return;
         const currentBet = CONFIG.BET_LEVELS[state.currentBetIndex];
@@ -75,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const newGrid = [];
-        for (let i = 0; i < CONFIG.GRID_SIZE; i++) {
+        for (let i = 0; i < CONFIG.GRID_ROWS * CONFIG.GRID_COLS; i++) {
             newGrid.push(generateRandomSymbol());
         }
         state.gridState = newGrid;
@@ -102,10 +110,95 @@ document.addEventListener('DOMContentLoaded', () => {
         
         showWinOnGrid(wins.map(w => w.indices).flat(), multiplierSymbols.map(m => m.index));
         await delay(CONFIG.ANIMATION_DELAY.WIN_DISPLAY);
+
+        // Panggil fungsi tumble yang baru
         await disappearAndTumble(wins.map(w => w.indices).flat());
+        
         await processTumbles();
     }
     
+    // =======================================================================
+    // FUNGSI TUMBLE BARU DENGAN ANIMASI JATUH SATU PER SATU
+    // =======================================================================
+    async function disappearAndTumble(winningIndices) {
+        const gridElements = Array.from(grid.children);
+        
+        // 1. Animasi pecah
+        winningIndices.forEach(i => gridElements[i].classList.add('shattering'));
+        await delay(CONFIG.ANIMATION_DELAY.SHATTER);
+        
+        // 2. Siapkan grid baru secara logis
+        const nextGridState = [...state.gridState];
+        const columns = [];
+        for (let i = 0; i < CONFIG.GRID_COLS; i++) {
+            columns.push([]);
+        }
+
+        // Hapus simbol yang menang dari state dan kelompokkan per kolom
+        state.gridState.forEach((symbol, index) => {
+            if (!winningIndices.includes(index)) {
+                const col = index % CONFIG.GRID_COLS;
+                columns[col].push(symbol);
+            }
+        });
+
+        // Isi kekosongan dengan simbol baru dari atas
+        for (let col = 0; col < CONFIG.GRID_COLS; col++) {
+            const needed = CONFIG.GRID_ROWS - columns[col].length;
+            for (let i = 0; i < needed; i++) {
+                columns[col].unshift(generateRandomSymbol());
+            }
+        }
+        
+        // Gabungkan kembali kolom menjadi grid 1D
+        for (let row = 0; row < CONFIG.GRID_ROWS; row++) {
+            for (let col = 0; col < CONFIG.GRID_COLS; col++) {
+                const index = row * CONFIG.GRID_COLS + col;
+                nextGridState[index] = columns[col][row];
+            }
+        }
+        
+        state.gridState = nextGridState;
+
+        // 3. Render ulang grid dengan animasi jatuh yang diberi delay
+        await renderGrid(false, true);
+    }
+    
+    // =================================================================
+    // FUNGSI RENDER DIUPDATE UNTUK MENGELOLA ANIMASI JATUH
+    // =================================================================
+    async function renderGrid(isInitialSpin, isTumble = false) {
+        grid.innerHTML = '';
+        const fallPromises = [];
+
+        state.gridState.forEach((symbol, index) => {
+            const el = document.createElement('div');
+            el.classList.add('symbol');
+            el.textContent = symbol.content;
+            if (symbol.type === 'MULTIPLIER') el.classList.add('multiplier');
+            
+            if (isTumble) {
+                // Beri delay animasi jatuh berdasarkan posisi kolom dan baris
+                const row = Math.floor(index / CONFIG.GRID_COLS);
+                const col = index % CONFIG.GRID_COLS;
+                el.style.animationDelay = `${(col * 0.1) + (row * 0.05)}s`;
+            } else if (!isInitialSpin) {
+                el.style.animation = 'none';
+            }
+            
+            grid.appendChild(el);
+            
+            const promise = new Promise(resolve => {
+                el.addEventListener('animationend', resolve, { once: true });
+            });
+            fallPromises.push(promise);
+        });
+
+        // Tunggu semua animasi jatuh selesai
+        await Promise.all(fallPromises);
+    }
+
+    // --- SISA KODE (TIDAK ADA PERUBAHAN, BISA LANGSUNG DITEMPEL) ---
     function handleBuyFreeSpins() {
         if (state.isSpinning) return;
         const cost = CONFIG.BET_LEVELS[state.currentBetIndex] * CONFIG.BUY_FS_COST_MULTIPLIER;
@@ -158,37 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { wins, totalMultiplier, scatters, multiplierSymbols: multipliersOnScreen };
     }
 
-    async function disappearAndTumble(winningIndices) {
-        const gridElements = Array.from(grid.children);
-        winningIndices.forEach(i => gridElements[i].classList.add('disappearing'));
-        await delay(CONFIG.ANIMATION_DELAY.DISAPPEAR);
-        const newGridState = [...state.gridState];
-        winningIndices.forEach(i => newGridState[i] = null);
-        for (let col = 0; col < 6; col++) {
-            let emptySpaces = 0;
-            for (let row = 4; row >= 0; row--) {
-                const index = row * 6 + col;
-                if (newGridState[index] === null) {
-                    emptySpaces++;
-                } else if (emptySpaces > 0) {
-                    newGridState[index + emptySpaces * 6] = newGridState[index];
-                    newGridState[index] = null;
-                }
-            }
-        }
-        for (let i = 0; i < newGridState.length; i++) {
-            if (newGridState[i] === null) {
-                newGridState[i] = generateRandomSymbol();
-            }
-        }
-        state.gridState = newGridState;
-        await renderGrid(false);
-    }
-    
-    /*
-    // FUNGSI SUARA DINONAKTIFKAN
-    function playSound(soundName) {}
-    */
+    /* function playSound(soundName) {} */
 
     function triggerScreenShake() {
         gameContainer.classList.add('shake');
@@ -221,31 +284,18 @@ document.addEventListener('DOMContentLoaded', () => {
         await delay(1000);
     }
     
-    // =================================================================
-    // INI ADALAH FUNGSI DENGAN LOGIKA FINAL YANG SUDAH DIPERBAIKI
-    // =================================================================
     function endSpin() {
         if (state.currentTumbleWin > 0) {
             totalWinAmount.textContent = state.currentTumbleWin.toLocaleString();
             totalWinSplash.classList.remove('hidden');
             totalWinSplash.classList.add('visible');
         }
-
         checkFreeSpinsTrigger();
-
-        // Di akhir setiap urutan spin/tumble, kita reset statusnya.
         state.isSpinning = false;
-
-        // SEKARANG, kita tentukan apa yang terjadi selanjutnya.
         if (state.isInFreeSpins && state.freeSpinsRemaining > 0) {
-            // Jika masih di mode free spins, jadwalkan putaran berikutnya.
-            // Karena isSpinning sudah false, putaran berikutnya PASTI bisa dimulai.
             setTimeout(handleSpin, state.currentTumbleWin > 0 ? 2000 : 1000);
         } else {
-            // Jika tidak, berarti siklus permainan benar-benar berakhir.
-            if (state.isInFreeSpins) exitFreeSpins(); // Keluar dari mode FS jika spin habis
-            
-            // Aktifkan kembali tombol untuk putaran manual berikutnya.
+            if (state.isInFreeSpins) exitFreeSpins();
             spinButton.disabled = false;
             buyFsBtn.disabled = false;
         }
@@ -253,20 +303,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function enterFreeSpins(isBought = false) {
         if (state.isInFreeSpins) {
-            state.freeSpinsRemaining += 5; // Menambahkan 5 spin jika re-trigger
+            state.freeSpinsRemaining += 5;
             updateFreeSpinsDisplay();
             return;
         }
-        
         state.isInFreeSpins = true;
         state.freeSpinsRemaining = CONFIG.FREE_SPINS_AWARDED;
         freeSpinsDisplay.style.display = 'block';
         document.body.classList.add('free-spins-active');
         monkeyMascot.classList.add('excited');
         updateFreeSpinsDisplay();
-        
         if (isBought) {
-            // Jika membeli, langsung mulai putaran pertama.
             setTimeout(handleSpin, 500);
         }
     }
@@ -288,21 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
         decreaseBetBtn.addEventListener('click', () => changeBet(-1));
     }
 
-    function createInitialGrid() { grid.innerHTML = ''; for (let i = 0; i < CONFIG.GRID_SIZE; i++) { const el = document.createElement('div'); el.classList.add('symbol'); grid.appendChild(el); } }
+    function createInitialGrid() { grid.innerHTML = ''; for (let i = 0; i < CONFIG.GRID_ROWS * CONFIG.GRID_COLS; i++) { const el = document.createElement('div'); el.classList.add('symbol'); grid.appendChild(el); } }
     
-    async function renderGrid(withFallAnimation) { 
-        grid.innerHTML = ''; 
-        state.gridState.forEach(symbol => { 
-            const el = document.createElement('div'); 
-            el.classList.add('symbol'); 
-            el.textContent = symbol.content; 
-            if (symbol.type === 'MULTIPLIER') el.classList.add('multiplier'); 
-            if (!withFallAnimation) el.style.animation = 'none'; 
-            grid.appendChild(el); 
-        }); 
-        if (withFallAnimation) { await delay(CONFIG.ANIMATION_DELAY.FALL); } 
-    }
-
     function showWinOnGrid(winIndices, multiplierIndices) { 
         const gridElements = Array.from(grid.children); 
         winIndices.forEach(i => gridElements[i].classList.add('winning')); 
