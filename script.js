@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Objek untuk menampung audio. Browser akan memblokir autoplay
     // sampai ada interaksi user pertama (klik).
+    // --- SUARA DINONAKTIFKAN SEMENTARA DENGAN KOMENTAR ---
+    /*
     const SOUNDS = {
         spin: new Audio('spin.mp3'),
         win: new Audio('win.mp3'),
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         freespin_intro: new Audio('freespin_intro.mp3'),
         big_win: new Audio('big_win.mp3')
     };
+    */
 
     const SIMBOL = {
         '🐵': { value: 0.25 }, '🦓': { value: 0.4 }, '🦒': { value: 0.5 },
@@ -57,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ==================================
     // FUNGSI UTAMA (handleSpin, processTumbles, dll)
-    // ... (Fungsi-fungsi ini sebagian besar sama, tapi dengan tambahan pemanggilan suara & animasi)
     // ==================================
 
     async function handleSpin() {
@@ -66,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isInFreeSpins && state.balance < currentBet) {
             alert("Saldo tidak cukup!"); return;
         }
-        playSound('spin');
+        // playSound('spin'); // --- PANGGILAN SUARA DIKOMENTARI ---
         startSpin();
         if (!state.isInFreeSpins) {
             state.balance -= currentBet;
@@ -85,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { wins, totalMultiplier, scatters, multiplierSymbols } = calculateWins(state.gridState);
         if (wins.length === 0) return;
 
-        playSound('win');
+        // playSound('win'); // --- PANGGILAN SUARA DIKOMENTARI ---
         const winAmount = wins.reduce((total, win) => total + (SIMBOL[win.symbol].value * win.count), 0);
         const finalWin = winAmount * totalMultiplier * CONFIG.BET_LEVELS[state.currentBetIndex];
         state.currentTumbleWin += finalWin;
@@ -103,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await processTumbles();
     }
     
-    // ... (fungsi-fungsi lain seperti handleBuyFreeSpins, generateGridSymbols, dll)
     function handleBuyFreeSpins() {
         if (state.isSpinning) return;
         const cost = CONFIG.BET_LEVELS[state.currentBetIndex] * CONFIG.BUY_FS_COST_MULTIPLIER;
@@ -113,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         state.balance -= cost;
         updateBalanceDisplay();
-        enterFreeSpins(true); // Memulai langsung
+        enterFreeSpins(true);
     }
 
     function checkFreeSpinsTrigger() {
@@ -157,8 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function disappearAndTumble(winningIndices) {
-        playSound('tumble');
-        //... (sisa logikanya sama persis)
+        // playSound('tumble'); // --- PANGGILAN SUARA DIKOMENTARI ---
         const gridElements = Array.from(grid.children);
         winningIndices.forEach(i => gridElements[i].classList.add('disappearing'));
         await delay(CONFIG.ANIMATION_DELAY.DISAPPEAR);
@@ -186,14 +186,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ==================================
-    // FUNGSI BARU & YANG DIMODIFIKASI
+    // FUNGSI TAMPILAN & INTERAKSI
     // ==================================
     
-    /** Memainkan suara */
+    /** Fungsi playSound sekarang kosong agar tidak memicu error */
     function playSound(soundName) {
-        // Menghentikan suara sebelumnya & memutar dari awal
-        SOUNDS[soundName].currentTime = 0;
-        SOUNDS[soundName].play().catch(e => console.log("User needs to interact with the page first."));
+        // Ini adalah fungsi dummy (kosong) agar kode tetap berjalan tanpa suara.
+        // Untuk mengaktifkan kembali suara:
+        // 1. Hapus komentar pada objek 'SOUNDS' di bagian atas.
+        // 2. Hapus atau beri komentar pada fungsi 'playSound' ini,
+        //    sehingga fungsi 'playSound' asli yang memutar audio akan digunakan.
+        // const audio = SOUNDS[soundName];
+        // if (audio) {
+        //     audio.currentTime = 0;
+        //     audio.play().catch(e => console.log(`Audio error for ${soundName}:`, e));
+        // }
     }
 
     /** Memicu getaran layar */
@@ -220,39 +227,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.body.appendChild(flyEl);
             
-            // Atur tujuan animasi via variabel CSS
             flyEl.style.setProperty('--target-x', `${targetX - startRect.left}px`);
             flyEl.style.setProperty('--target-y', `${targetY - startRect.top}px`);
             
-            // Update keyframes secara dinamis
-            const styleSheet = document.styleSheets[0];
-            const keyframes =`
-                @keyframes fly-to-target {
-                    0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
-                    100% { transform: translate(var(--target-x), var(--target-y)) scale(0.1); opacity: 0; }
-                }`;
-            
-            // Hapus rule lama jika ada, lalu tambahkan yg baru
-            // (Cara sederhana, untuk demo ini sudah cukup)
-            try { styleSheet.deleteRule(styleSheet.cssRules.length - 1); } catch (e) {}
-            styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-
+            // Animasi dimulai secara otomatis oleh CSS
+            // Hapus elemen setelah animasi selesai
             setTimeout(() => flyEl.remove(), 1000);
         });
         
-        await delay(1000); // Tunggu animasi selesai
+        await delay(1000);
     }
     
     function endSpin() {
         if (state.currentTumbleWin > 0) {
-            playSound('big_win');
+            // playSound('big_win'); // --- PANGGILAN SUARA DIKOMENTARI ---
             totalWinAmount.textContent = state.currentTumbleWin.toLocaleString();
             totalWinSplash.classList.remove('hidden');
             totalWinSplash.classList.add('visible');
         }
         checkFreeSpinsTrigger();
         if (state.isInFreeSpins && state.freeSpinsRemaining > 0) {
-            setTimeout(handleSpin, state.currentTumbleWin > 0 ? 2000 : 1000); // Jeda lebih lama jika menang
+            setTimeout(handleSpin, state.currentTumbleWin > 0 ? 2000 : 1000);
         } else {
             if (state.isInFreeSpins) exitFreeSpins();
             state.isSpinning = false;
@@ -267,12 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateFreeSpinsDisplay();
             return;
         }
-        playSound('freespin_intro');
+        // playSound('freespin_intro'); // --- PANGGILAN SUARA DIKOMENTARI ---
         state.isInFreeSpins = true;
         state.freeSpinsRemaining = CONFIG.FREE_SPINS_AWARDED;
         freeSpinsDisplay.style.display = 'block';
         document.body.classList.add('free-spins-active');
-        monkeyMascot.classList.add('excited'); // AKTIFKAN MONYET
+        monkeyMascot.classList.add('excited');
         updateFreeSpinsDisplay();
         if (isBought) {
             setTimeout(handleSpin, 500);
@@ -283,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isInFreeSpins = false;
         freeSpinsDisplay.style.display = 'none';
         document.body.classList.remove('free-spins-active');
-        monkeyMascot.classList.remove('excited'); // SEMBUNYIKAN MONYET
+        monkeyMascot.classList.remove('excited');
     }
 
     // ... (sisa fungsi helper yang tidak berubah)
