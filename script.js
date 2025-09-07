@@ -67,8 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isInFreeSpins && state.balance < currentBet) {
             alert("Saldo tidak cukup!"); return;
         }
-        // playSound('spin');
+        
         startSpin();
+        
         if (!state.isInFreeSpins) {
             state.balance -= currentBet;
             updateBalanceDisplay();
@@ -77,15 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
             updateFreeSpinsDisplay();
         }
 
-        // ==========================================================
-        // INI ADALAH BAGIAN YANG DIPERBAIKI DARI ERROR SEBELUMNYA
-        // ==========================================================
         const newGrid = [];
         for (let i = 0; i < CONFIG.GRID_SIZE; i++) {
             newGrid.push(generateRandomSymbol());
         }
         state.gridState = newGrid;
-        // ==========================================================
 
         await renderGrid(true);
         await processTumbles();
@@ -243,11 +240,17 @@ document.addEventListener('DOMContentLoaded', () => {
             totalWinSplash.classList.remove('hidden');
             totalWinSplash.classList.add('visible');
         }
+
         checkFreeSpinsTrigger();
+
+        // ===============================================
+        // INI ADALAH FUNGSI DENGAN LOGIKA YANG DIPERBAIKI
+        // ===============================================
         if (state.isInFreeSpins && state.freeSpinsRemaining > 0) {
             setTimeout(handleSpin, state.currentTumbleWin > 0 ? 2000 : 1000);
         } else {
             if (state.isInFreeSpins) exitFreeSpins();
+            
             state.isSpinning = false;
             spinButton.disabled = false;
             buyFsBtn.disabled = false;
@@ -267,7 +270,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('free-spins-active');
         monkeyMascot.classList.add('excited');
         updateFreeSpinsDisplay();
+        
         if (isBought) {
+            // Saat membeli, kita reset dulu status isSpinning
+            // lalu panggil handleSpin
+            state.isSpinning = false;
             setTimeout(handleSpin, 500);
         }
     }
