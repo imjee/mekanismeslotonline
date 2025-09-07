@@ -1,9 +1,7 @@
-/* ... (Semua CSS dari versi sebelumnya tetap sama) ... */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
 
 :root {
-    --bg-normal: #f7b733;
-    --bg-freespin: #8e44ad;
+    --bg-freespin: #8e44ad; /* Ini sekarang hanya untuk warna cadangan */
     --grid-bg: rgba(0, 0, 0, 0.2);
     --text-color: #fff;
     --accent-color: #fc4a1a;
@@ -17,62 +15,43 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(45deg, var(--bg-normal), var(--accent-color));
-    transition: background 0.5s ease;
-    overflow: hidden; /* Mencegah scrollbar saat ada animasi */
+    
+    /* --- PERUBAHAN 1: BACKGROUND NORMAL SEKARANG MENGGUNAKAN GAMBAR PERTAMA --- */
+    background: url('background_normal.jpg') no-repeat center center fixed;
+    background-size: cover;
+    
+    /* Efek transisi agar pergantian background lebih mulus */
+    transition: background-image 0.5s ease-in-out;
+    overflow: hidden;
 }
 
+/* --- PERUBAHAN 2: BACKGROUND FREE SPIN SEKARANG MENGGUNAKAN GAMBAR KEDUA --- */
 body.free-spins-active {
-    background: linear-gradient(45deg, var(--bg-freespin), #3498db);
+    background-image: url('background_freespin.jpg');
 }
+
+/* Kode overlay (::before) dari sebelumnya telah dihapus karena tidak diperlukan lagi */
+
 
 .game-container {
-    /* ... (gaya .game-container lainnya) ... */
-    position: relative; /* Diperlukan untuk posisi absolut monyet */
-    transition: transform 0.1s ease-in-out;
-}
-
-.game-container.shake {
-    animation: screen-shake 0.4s;
-}
-
-header {
     position: relative;
+    transition: transform 0.1s ease-in-out;
+    background: rgba(0, 0, 0, 0.3); /* Dibuat sedikit lebih gelap agar kontras dengan background */
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(8px); /* Blur dinaikkan sedikit agar game lebih fokus */
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+    color: var(--text-color);
 }
 
-/* GAYA UNTUK MONYET */
-#monkey-mascot {
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 4rem;
-    z-index: 10;
-    opacity: 0;
-    transition: opacity 0.5s ease, top 0.5s ease;
-}
-
-#monkey-mascot.excited {
-    opacity: 1;
-    top: -65px;
-    animation: monkey-dance 1.5s infinite;
-}
-
-/* GAYA UNTUK PERKALIAN TERBANG */
-.multiplier-fly {
-    position: fixed; /* Posisi relatif terhadap viewport */
-    z-index: 100;
-    padding: 5px 10px;
-    border-radius: 50%;
-    font-weight: 700;
-    color: #000;
-    background: radial-gradient(circle, #f1c40f, #f39c12);
-    box-shadow: 0 0 15px #fff;
-    pointer-events: none; /* Agar tidak bisa diklik */
-    animation: fly-to-target 1s ease-in-out forwards;
-}
-
-/* ... (Sisa CSS lainnya tetap sama) ... */
+/* ... (Sisa kode CSS lainnya sama persis dan tidak perlu diubah) ... */
+.game-container.shake { animation: screen-shake 0.4s; }
+header { position: relative; }
+#monkey-mascot { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 4rem; z-index: 10; opacity: 0; transition: opacity 0.5s ease, top 0.5s ease; }
+#monkey-mascot.excited { opacity: 1; top: -65px; animation: monkey-dance 1.5s infinite; }
+.multiplier-fly { position: fixed; z-index: 100; padding: 5px 10px; border-radius: 50%; font-weight: 700; color: #000; background: radial-gradient(circle, #f1c40f, #f39c12); box-shadow: 0 0 15px #fff; pointer-events: none; animation: fly-to-target 1s ease-in-out forwards; }
 h1 { font-size: 1.8rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
 .status-bar { display: flex; justify-content: space-around; margin-bottom: 15px; }
 .status-box { background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 10px; font-size: 1rem; font-weight: 700; }
@@ -99,26 +78,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 #total-win-splash.hidden { display: none; }
 #total-win-splash.visible { opacity: 1; }
 #total-win-amount { font-size: 4rem; }
-
-/* ANIMATIONS BARU */
-@keyframes monkey-dance {
-    0%, 100% { transform: translateX(-50%) rotate(-5deg); }
-    50% { transform: translateX(-50%) rotate(5deg) scale(1.1); }
-}
-
-@keyframes screen-shake {
-    0%, 100% { transform: translate(0, 0); }
-    25% { transform: translate(5px, 5px); }
-    50% { transform: translate(-5px, -5px); }
-    75% { transform: translate(5px, -5px); }
-}
-
-@keyframes fly-to-target {
-    0% { transform: scale(1.5); opacity: 1; }
-    100% { transform: scale(0.1); opacity: 0; }
-}
-
-/* ... (Sisa keyframes lainnya tetap sama) ... */
+@keyframes monkey-dance { 0%, 100% { transform: translateX(-50%) rotate(-5deg); } 50% { transform: translateX(-50%) rotate(5deg) scale(1.1); } }
+@keyframes screen-shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(5px, 5px); } 50% { transform: translate(-5px, -5px); } 75% { transform: translate(5px, -5px); } }
+@keyframes fly-to-target { 0% { transform: scale(1.5); opacity: 1; } 100% { transform: translate(var(--target-x), var(--target-y)) scale(0.1); opacity: 0; } }
 @keyframes fall-in { from { transform: translateY(-100px) scale(0.5); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 @keyframes fall-in-special { from { transform: translateY(-100px) scale(0.5) rotate(-180deg); opacity: 0; } to { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; } }
 @keyframes win-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px var(--win-glow); } 50% { transform: scale(1.1); box-shadow: 0 0 30px var(--win-glow); } }
