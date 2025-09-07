@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savanna Spin Slot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🦁 Savanna Spin Slot 🦓</h1>
+            <div class="status-bar">
+                <div id="free-spins-display" class="status-box" style="display: none;">
+                    Free Spins: <span id="free-spins-count">0</span>
+                </div>
+                <div class="status-box">
+                    Saldo: <span id="balance">10000.00</span>
+                </div>
+            </div>
+        </header>
+        
+        <div id="slot-grid-container">
+            <div id="slot-grid"></div>
+            <div id="total-win-splash" class="hidden">
+                <span>Total Kemenangan</span>
+                <span id="total-win-amount">0</span>
+            </div>
+        </div>
+
+        <footer>
+            <div class="controls">
+                <div class="bet-controls">
+                    <button id="decrease-bet" class="btn-bet">-</button>
+                    <input type="text" id="bet-amount" value="100" readonly>
+                    <button id="increase-bet" class="btn-bet">+</button>
+                </div>
+                <button id="spin-button" class="btn-spin">SPIN</button>
+                <button id="buy-fs-button" class="btn-buy">
+                    Beli Free Spins
+                    <span id="buy-fs-cost">10000</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
