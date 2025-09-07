@@ -11,12 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     // SUARA DINONAKTIFKAN UNTUK MENGHINDARI ERROR 'STUCK'
-    // Untuk mengaktifkan, hapus komentar ini dan sediakan file MP3.
     const SOUNDS = {
-        spin: new Audio('spin.mp3'),
-        win: new Audio('win.mp3'),
-        tumble: new Audio('tumble.mp3'),
-        freespin_intro: new Audio('freespin_intro.mp3'),
+        spin: new Audio('spin.mp3'), win: new Audio('win.mp3'),
+        tumble: new Audio('tumble.mp3'), freespin_intro: new Audio('freespin_intro.mp3'),
         big_win: new Audio('big_win.mp3')
     };
     */
@@ -24,8 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const SIMBOL = {
         '🐵': { value: 0.25 }, '🦓': { value: 0.4 }, '🦒': { value: 0.5 },
         '🐘': { value: 0.8 }, '🦁': { value: 1 }, '🦜': { value: 2 },
-        'SCATTER': { value: 0, isSpecial: true },
-        'MULTIPLIER': { value: 0, isSpecial: true }
+        'SCATTER': { value: 0, isSpecial: true }, 'MULTIPLIER': { value: 0, isSpecial: true }
     };
     const REGULAR_SYMBOLS = Object.keys(SIMBOL).filter(k => !SIMBOL[k].isSpecial);
     const MULTIPLIER_VALUES = [2, 3, 4, 5, 8, 10, 12, 15, 20, 25, 50, 100];
@@ -93,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const { wins, totalMultiplier, multiplierSymbols } = calculateWins(state.gridState);
         if (wins.length === 0) return;
 
-        // playSound('win');
         const winAmount = wins.reduce((total, win) => total + (SIMBOL[win.symbol].value * win.count), 0);
         const finalWin = winAmount * totalMultiplier * CONFIG.BET_LEVELS[state.currentBetIndex];
         state.currentTumbleWin += finalWin;
@@ -164,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function disappearAndTumble(winningIndices) {
-        // playSound('tumble');
         const gridElements = Array.from(grid.children);
         winningIndices.forEach(i => gridElements[i].classList.add('disappearing'));
         await delay(CONFIG.ANIMATION_DELAY.DISAPPEAR);
@@ -193,13 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     /*
     // FUNGSI SUARA DINONAKTIFKAN
-    function playSound(soundName) {
-        const audio = SOUNDS[soundName];
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(e => console.log(`Audio error for ${soundName}:`, e));
-        }
-    }
+    function playSound(soundName) {}
     */
 
     function triggerScreenShake() {
@@ -233,9 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
         await delay(1000);
     }
     
+    // =================================================================
+    // INI ADALAH FUNGSI DENGAN LOGIKA FINAL YANG SUDAH DIPERBAIKI
+    // =================================================================
     function endSpin() {
         if (state.currentTumbleWin > 0) {
-            // playSound('big_win');
             totalWinAmount.textContent = state.currentTumbleWin.toLocaleString();
             totalWinSplash.classList.remove('hidden');
             totalWinSplash.classList.add('visible');
@@ -243,15 +233,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         checkFreeSpinsTrigger();
 
-        // ===============================================
-        // INI ADALAH FUNGSI DENGAN LOGIKA YANG DIPERBAIKI
-        // ===============================================
+        // Di akhir setiap urutan spin/tumble, kita reset statusnya.
+        state.isSpinning = false;
+
+        // SEKARANG, kita tentukan apa yang terjadi selanjutnya.
         if (state.isInFreeSpins && state.freeSpinsRemaining > 0) {
+            // Jika masih di mode free spins, jadwalkan putaran berikutnya.
+            // Karena isSpinning sudah false, putaran berikutnya PASTI bisa dimulai.
             setTimeout(handleSpin, state.currentTumbleWin > 0 ? 2000 : 1000);
         } else {
-            if (state.isInFreeSpins) exitFreeSpins();
+            // Jika tidak, berarti siklus permainan benar-benar berakhir.
+            if (state.isInFreeSpins) exitFreeSpins(); // Keluar dari mode FS jika spin habis
             
-            state.isSpinning = false;
+            // Aktifkan kembali tombol untuk putaran manual berikutnya.
             spinButton.disabled = false;
             buyFsBtn.disabled = false;
         }
@@ -259,11 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function enterFreeSpins(isBought = false) {
         if (state.isInFreeSpins) {
-            state.freeSpinsRemaining += 5;
+            state.freeSpinsRemaining += 5; // Menambahkan 5 spin jika re-trigger
             updateFreeSpinsDisplay();
             return;
         }
-        // playSound('freespin_intro');
+        
         state.isInFreeSpins = true;
         state.freeSpinsRemaining = CONFIG.FREE_SPINS_AWARDED;
         freeSpinsDisplay.style.display = 'block';
@@ -272,9 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFreeSpinsDisplay();
         
         if (isBought) {
-            // Saat membeli, kita reset dulu status isSpinning
-            // lalu panggil handleSpin
-            state.isSpinning = false;
+            // Jika membeli, langsung mulai putaran pertama.
             setTimeout(handleSpin, 500);
         }
     }
