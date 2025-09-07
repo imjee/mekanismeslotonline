@@ -76,7 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
             state.freeSpinsRemaining--;
             updateFreeSpinsDisplay();
         }
-        state.gridState = generateGridSymbols();
+
+        // ==========================================================
+        // INI ADALAH BAGIAN YANG DIPERBAIKI DARI ERROR SEBELUMNYA
+        // ==========================================================
+        const newGrid = [];
+        for (let i = 0; i < CONFIG.GRID_SIZE; i++) {
+            newGrid.push(generateRandomSymbol());
+        }
+        state.gridState = newGrid;
+        // ==========================================================
+
         await renderGrid(true);
         await processTumbles();
         endSpin();
