@@ -9,10 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ANIMATION_DELAY: { WIN_DISPLAY: 800, DISAPPEAR: 300, FALL: 500 }
     };
 
-    // Objek untuk menampung audio. Browser akan memblokir autoplay
-    // sampai ada interaksi user pertama (klik).
-    // --- SUARA DINONAKTIFKAN SEMENTARA DENGAN KOMENTAR ---
     /*
+    // SUARA DINONAKTIFKAN UNTUK MENGHINDARI ERROR 'STUCK'
+    // Untuk mengaktifkan, hapus komentar ini dan sediakan file MP3.
     const SOUNDS = {
         spin: new Audio('spin.mp3'),
         win: new Audio('win.mp3'),
@@ -59,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ==================================
-    // FUNGSI UTAMA (handleSpin, processTumbles, dll)
+    // FUNGSI UTAMA
     // ==================================
 
     async function handleSpin() {
@@ -68,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isInFreeSpins && state.balance < currentBet) {
             alert("Saldo tidak cukup!"); return;
         }
-        // playSound('spin'); // --- PANGGILAN SUARA DIKOMENTARI ---
+        // playSound('spin');
         startSpin();
         if (!state.isInFreeSpins) {
             state.balance -= currentBet;
@@ -84,10 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function processTumbles() {
-        const { wins, totalMultiplier, scatters, multiplierSymbols } = calculateWins(state.gridState);
+        const { wins, totalMultiplier, multiplierSymbols } = calculateWins(state.gridState);
         if (wins.length === 0) return;
 
-        // playSound('win'); // --- PANGGILAN SUARA DIKOMENTARI ---
+        // playSound('win');
         const winAmount = wins.reduce((total, win) => total + (SIMBOL[win.symbol].value * win.count), 0);
         const finalWin = winAmount * totalMultiplier * CONFIG.BET_LEVELS[state.currentBetIndex];
         state.currentTumbleWin += finalWin;
@@ -120,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkFreeSpinsTrigger() {
         const scatters = state.gridState.filter(s => s.type === 'SCATTER').length;
         if (scatters >= CONFIG.SCATTER_TRIGGER_COUNT) {
-            if(!state.isInFreeSpins) triggerScreenShake(); // Getarkan hanya saat pertama kali dapat
+            if(!state.isInFreeSpins) triggerScreenShake();
             enterFreeSpins();
         }
     }
@@ -158,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function disappearAndTumble(winningIndices) {
-        // playSound('tumble'); // --- PANGGILAN SUARA DIKOMENTARI ---
+        // playSound('tumble');
         const gridElements = Array.from(grid.children);
         winningIndices.forEach(i => gridElements[i].classList.add('disappearing'));
         await delay(CONFIG.ANIMATION_DELAY.DISAPPEAR);
@@ -185,31 +184,22 @@ document.addEventListener('DOMContentLoaded', () => {
         await renderGrid(false);
     }
     
-    // ==================================
-    // FUNGSI TAMPILAN & INTERAKSI
-    // ==================================
-    
-    /** Fungsi playSound sekarang kosong agar tidak memicu error */
+    /*
+    // FUNGSI SUARA DINONAKTIFKAN
     function playSound(soundName) {
-        // Ini adalah fungsi dummy (kosong) agar kode tetap berjalan tanpa suara.
-        // Untuk mengaktifkan kembali suara:
-        // 1. Hapus komentar pada objek 'SOUNDS' di bagian atas.
-        // 2. Hapus atau beri komentar pada fungsi 'playSound' ini,
-        //    sehingga fungsi 'playSound' asli yang memutar audio akan digunakan.
-        // const audio = SOUNDS[soundName];
-        // if (audio) {
-        //     audio.currentTime = 0;
-        //     audio.play().catch(e => console.log(`Audio error for ${soundName}:`, e));
-        // }
+        const audio = SOUNDS[soundName];
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log(`Audio error for ${soundName}:`, e));
+        }
     }
+    */
 
-    /** Memicu getaran layar */
     function triggerScreenShake() {
         gameContainer.classList.add('shake');
         setTimeout(() => gameContainer.classList.remove('shake'), 400);
     }
 
-    /** Animasi perkalian terbang */
     async function animateMultipliers(multiplierSymbols) {
         const targetRect = totalWinSplash.getBoundingClientRect();
         const targetX = targetRect.left + targetRect.width / 2;
@@ -230,8 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
             flyEl.style.setProperty('--target-x', `${targetX - startRect.left}px`);
             flyEl.style.setProperty('--target-y', `${targetY - startRect.top}px`);
             
-            // Animasi dimulai secara otomatis oleh CSS
-            // Hapus elemen setelah animasi selesai
             setTimeout(() => flyEl.remove(), 1000);
         });
         
@@ -240,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function endSpin() {
         if (state.currentTumbleWin > 0) {
-            // playSound('big_win'); // --- PANGGILAN SUARA DIKOMENTARI ---
+            // playSound('big_win');
             totalWinAmount.textContent = state.currentTumbleWin.toLocaleString();
             totalWinSplash.classList.remove('hidden');
             totalWinSplash.classList.add('visible');
@@ -262,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateFreeSpinsDisplay();
             return;
         }
-        // playSound('freespin_intro'); // --- PANGGILAN SUARA DIKOMENTARI ---
+        // playSound('freespin_intro');
         state.isInFreeSpins = true;
         state.freeSpinsRemaining = CONFIG.FREE_SPINS_AWARDED;
         freeSpinsDisplay.style.display = 'block';
@@ -281,8 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
         monkeyMascot.classList.remove('excited');
     }
 
-    // ... (sisa fungsi helper yang tidak berubah)
     const delay = ms => new Promise(res => setTimeout(res, ms));
+    
     function init() {
         updateBetDisplay(); updateBalanceDisplay(); createInitialGrid();
         spinButton.addEventListener('click', handleSpin);
@@ -290,15 +278,66 @@ document.addEventListener('DOMContentLoaded', () => {
         increaseBetBtn.addEventListener('click', () => changeBet(1));
         decreaseBetBtn.addEventListener('click', () => changeBet(-1));
     }
+
     function createInitialGrid() { grid.innerHTML = ''; for (let i = 0; i < CONFIG.GRID_SIZE; i++) { const el = document.createElement('div'); el.classList.add('symbol'); grid.appendChild(el); } }
-    async function renderGrid(withFallAnimation) { grid.innerHTML = ''; state.gridState.forEach(symbol => { const el = document.createElement('div'); el.classList.add('symbol'); el.textContent = symbol.content; if (symbol.type === 'MULTIPLIER') el.classList.add('multiplier'); if (!withFallAnimation) el.style.animation = 'none'; grid.appendChild(el); }); if (withFallAnimation) { await delay(CONFIG.ANIMATION_DELAY.FALL); } }
-    function showWinOnGrid(winIndices, multiplierIndices) { const gridElements = Array.from(grid.children); winIndices.forEach(i => gridElements[i].classList.add('winning')); multiplierIndices.forEach(i => gridElements[i].classList.add('winning')); }
+    
+    async function renderGrid(withFallAnimation) { 
+        grid.innerHTML = ''; 
+        state.gridState.forEach(symbol => { 
+            const el = document.createElement('div'); 
+            el.classList.add('symbol'); 
+            el.textContent = symbol.content; 
+            if (symbol.type === 'MULTIPLIER') el.classList.add('multiplier'); 
+            if (!withFallAnimation) el.style.animation = 'none'; 
+            grid.appendChild(el); 
+        }); 
+        if (withFallAnimation) { await delay(CONFIG.ANIMATION_DELAY.FALL); } 
+    }
+
+    function showWinOnGrid(winIndices, multiplierIndices) { 
+        const gridElements = Array.from(grid.children); 
+        winIndices.forEach(i => gridElements[i].classList.add('winning')); 
+        multiplierIndices.forEach(i => gridElements[i].classList.add('winning')); 
+    }
+
     function updateBalanceDisplay() { balanceDisplay.textContent = state.balance.toFixed(2); }
-    function updateBetDisplay() { const bet = CONFIG.BET_LEVELS[state.currentBetIndex]; betAmountInput.value = bet; buyFsCostDisplay.textContent = (bet * CONFIG.BUY_FS_COST_MULTIPLIER).toLocaleString(); }
+    
+    function updateBetDisplay() { 
+        const bet = CONFIG.BET_LEVELS[state.currentBetIndex]; 
+        betAmountInput.value = bet; 
+        buyFsCostDisplay.textContent = (bet * CONFIG.BUY_FS_COST_MULTIPLIER).toLocaleString(); 
+    }
+
     function updateFreeSpinsDisplay() { freeSpinsCount.textContent = state.freeSpinsRemaining; }
-    function changeBet(direction) { if (state.isSpinning) return; const newIndex = state.currentBetIndex + direction; if (newIndex >= 0 && newIndex < CONFIG.BET_LEVELS.length) { state.currentBetIndex = newIndex; updateBetDisplay(); } }
-    function startSpin() { state.isSpinning = true; state.currentTumbleWin = 0; spinButton.disabled = true; buyFsBtn.disabled = true; totalWinSplash.classList.add('hidden'); totalWinSplash.classList.remove('visible'); }
-    function generateRandomSymbol() { const rand = Math.random(); if (rand < 0.04) { return { id: Date.now() + Math.random(), type: 'SCATTER', content: '👑' }; } if (rand < 0.09) { const value = MULTIPLIER_VALUES[Math.floor(Math.random() * MULTIPLIER_VALUES.length)]; return { id: Date.now() + Math.random(), type: 'MULTIPLIER', content: `x${value}`, value: value }; } const symbol = REGULAR_SYMBOLS[Math.floor(Math.random() * REGULAR_SYMBOLS.length)]; return { id: Date.now() + Math.random(), type: symbol, content: symbol }; }
+    
+    function changeBet(direction) { 
+        if (state.isSpinning) return; 
+        const newIndex = state.currentBetIndex + direction; 
+        if (newIndex >= 0 && newIndex < CONFIG.BET_LEVELS.length) { 
+            state.currentBetIndex = newIndex; 
+            updateBetDisplay(); 
+        } 
+    }
+    
+    function startSpin() { 
+        state.isSpinning = true; 
+        state.currentTumbleWin = 0; 
+        spinButton.disabled = true; 
+        buyFsBtn.disabled = true; 
+        totalWinSplash.classList.add('hidden'); 
+        totalWinSplash.classList.remove('visible'); 
+    }
+    
+    function generateRandomSymbol() { 
+        const rand = Math.random(); 
+        if (rand < 0.04) { return { id: Date.now() + Math.random(), type: 'SCATTER', content: '👑' }; } 
+        if (rand < 0.09) { 
+            const value = MULTIPLIER_VALUES[Math.floor(Math.random() * MULTIPLIER_VALUES.length)]; 
+            return { id: Date.now() + Math.random(), type: 'MULTIPLIER', content: `x${value}`, value: value }; 
+        } 
+        const symbol = REGULAR_SYMBOLS[Math.floor(Math.random() * REGULAR_SYMBOLS.length)]; 
+        return { id: Date.now() + Math.random(), type: symbol, content: symbol }; 
+    }
 
     init();
 });
